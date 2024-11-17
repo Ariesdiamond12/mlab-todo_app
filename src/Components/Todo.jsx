@@ -1,63 +1,64 @@
-import TodoItems from "./TodoItems";
-import tick from "../assets/tick.png";
-import delete_icon from "../assets/trash.png";
 import { useEffect, useRef, useState } from "react";
+import { RiTodoLine } from "react-icons/ri";
+import { TiPencil } from "react-icons/ti";
+import { FaRegTrashAlt } from "react-icons/fa";
+import tick from "../assets/tick.png";
 
 const Todo = () => {
-  //Adding a state var where I will store the the todo list and I have initialized it with an empty array to store multiple todos!!!
   const [todoList, setTodoList] = useState([]);
-
-  const [id, setId] = useState("");
   const [selectedPriority, setSelectedPriority] = useState("");
   const [targetValue, setTargetValue] = useState("");
   const [searchValue, setSearchValue] = useState("");
+  const [editId, setEditId] = useState(null); // Track which todo is being edited
+  const [editText, setEditText] = useState(""); // Text for editing
 
-  //The useRef is going to be connected to the to the input field that we created
-  //The inputRef is going to give us the value that will be entered in the input field
   const inputRef = useRef();
 
   useEffect(() => {
     setTodoList(JSON.parse(localStorage.getItem("todos")) || []);
   }, []);
 
-  //We need the text that is written in the input field by the user
-  const add = () => {
-    let inputText = targetValue;
+  useEffect(() => {
+    localStorage.setItem("todos", JSON.stringify(todoList));
+  }, [todoList]);
 
-    if (inputText === "") {
-      return null;
-    }
+  const addTodo = () => {
+    if (!targetValue) return;
 
     const newTodo = {
       id: Date.now(),
-      text: inputText,
+      text: targetValue,
       isComplete: false,
-      priority: selectedPriority,
+      priority: selectedPriority || "low",
     };
 
-    console.log(selectedPriority);
-
-    //To update the todo list we using the setTodoList
     setTodoList((prev) => [...prev, newTodo]);
-
-    localStorage.setItem("todos", JSON.stringify([...todoList, newTodo]));
-
+    setTargetValue("");
     inputRef.current.value = "";
   };
 
-  //Creating a delete function
-  //The filter will return all the todo item except where the id is same
-  //The id that i created will check for each todo item if their id is same as the id
   const deleteTodo = (id) => {
     setTodoList(todoList.filter((todo) => todo.id !== id));
   };
 
-  const handlePriorityChange = (event) => {
-    setSelectedPriority(event.target.value);
+  const updateTodo = (id, updatedFields) => {
+    setTodoList((prev) =>
+      prev.map((todo) => (todo.id === id ? { ...todo, ...updatedFields } : todo))
+    );
+  };
+
+  const handleEdit = (id, text) => {
+    setEditId(id);
+    setEditText(text);
+  };
+
+  const saveEdit = (id) => {
+    updateTodo(id, { text: editText });
+    setEditId(null);
   };
 
   const queried = todoList.filter((item) =>
-    item.text.toLowerCase().includes(searchValue)
+    item.text.toLowerCase().includes(searchValue.toLowerCase())
   );
 
   return (
@@ -71,21 +72,21 @@ const Todo = () => {
           ref={inputRef}
           onChange={(e) => setTargetValue(e.target.value)}
         />
-        <label htmlFor="priority task">
+        <label htmlFor="priority-task">
           <h1 className="text-lg font-medium">Priority</h1>
         </label>
         <select
           className="flex items-center my-7 bg-gray-200 outline-none h-16 w-full pl-6 pr-2 placeholder:text-slate-600 rounded-full"
           id="priority-task"
-          onChange={handlePriorityChange}
+          onChange={(e) => setSelectedPriority(e.target.value)}
         >
-          <option></option>
+          <option value="">Select Priority</option>
           <option value="low">Low</option>
           <option value="medium">Medium</option>
           <option value="high">High</option>
         </select>
         <button
-          onClick={add}
+          onClick={addTodo}
           className="border-none rounded-full bg-rose-600 h-16 w-full pl-6 pr-2 text-white text-lg font-medium cursor-pointer"
         >
           ADD +
@@ -96,45 +97,58 @@ const Todo = () => {
       <div className="bg-white w-11/12 max-w-md flex-col p-7 min-h-[500px] rounded-xl">
         {/* ----------------------Title------------------------ */}
         <div className="flex items-center mt-7 gap-2">
+          <RiTodoLine size={50} />
           <h1 className="text-3xl font-semibold">To-Do List</h1>
         </div>
         <input
           className="flex items-center my-7 bg-gray-200 outline-none h-16 w-full pl-6 pr-2 placeholder:text-slate-600 rounded-full"
           type="text"
           placeholder="search..."
-          onChange={(e) => searchValue(e.target.value)}
+          onChange={(e) => setSearchValue(e.target.value)}
         />
         <div>
-          {queried.map((item, index) => {
-            return (
-              <div className="flex items-center my-3 gap-2" key={item.id}>
-                <div className="flex flex-1 items-center cursor-pointer">
-                  <img className="w-7" src={tick} onClick={() => {}} />
+          {queried.map((item) => (
+            <div className="flex items-center my-3 gap-2" key={item.id}>
+              {/* Edit or Display Mode */}
+              {editId === item.id ? (
+                <input
+                  className="flex-1 bg-gray-200 outline-none h-10 rounded-md px-3"
+                  value={editText}
+                  onChange={(e) => setEditText(e.target.value)}
+                  onBlur={() => saveEdit(item.id)}
+                  autoFocus
+                />
+              ) : (
+                <div
+                  className={`flex flex-1 items-center cursor-pointer ${
+                    item.isComplete ? "line-through" : ""
+                  }`}
+                  onClick={() => updateTodo(item.id, { isComplete: !item.isComplete })}
+                >
+                  <img className="w-7" src={tick} />
                   <p className="text-slate-700 ml-4 text-[17px]">{item.text}</p>
                 </div>
-                <div
-                  style={{
-                    width: "5px",
-                    height: "5px",
-                    borderRadius: "50%",
-                    background:
-                      item.priority === "high"
-                        ? "red"
-                        : item.priority === "medium"
-                        ? "orange"
-                        : "green",
-                  }}
-                ></div>
-                <img
-                  onClick={() => {
-                    deleteTodo(item.id);
-                  }}
-                  src={delete_icon}
-                  className="w-3.5 cursor-pointer"
-                />
-              </div>
-            );
-          })}
+              )}
+              <div
+                style={{
+                  width: "10px",
+                  height: "10px",
+                  borderRadius: "50%",
+                  background:
+                    item.priority === "high"
+                      ? "red"
+                      : item.priority === "medium"
+                      ? "orange"
+                      : "green",
+                }}
+              ></div>
+              <TiPencil onClick={() => handleEdit(item.id, item.text)} className="cursor-pointer" />
+              <FaRegTrashAlt
+                onClick={() => deleteTodo(item.id)}
+                className="cursor-pointer"
+              />
+            </div>
+          ))}
         </div>
       </div>
     </div>
