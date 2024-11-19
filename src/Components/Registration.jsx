@@ -40,6 +40,9 @@ function Registraion({ addUser }) {
             <input
               className="border p-2 rounded-full"
               type="text"
+              required
+              min={3}
+              maxLength={8}
               onChange={(e) => {
                 setFirstName(e.target.value);
               }}
@@ -50,6 +53,7 @@ function Registraion({ addUser }) {
             <input
               className="border p-2 rounded-full"
               type="text"
+              required
               onChange={(e) => {
                 setSurname(e.target.value);
               }}
@@ -60,6 +64,7 @@ function Registraion({ addUser }) {
             <input
               className="border p-2 rounded-full"
               type="email"
+              required
               onChange={(e) => {
                 setEmail(e.target.value);
               }}
@@ -70,6 +75,9 @@ function Registraion({ addUser }) {
             <input
               className="border p-2 rounded-full"
               type="password"
+              required
+              minLength={6}
+              maxLength={12}
               onChange={(e) => {
                 setPassword(e.target.value);
               }}

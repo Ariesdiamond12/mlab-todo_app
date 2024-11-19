@@ -1,11 +1,12 @@
+// This is a simple Node.js using Express for building a REST API to manage users. It interacts with a SQLite database using the Better-SQLite3 library
 const express = require("express");
 const cors = require("cors");
 const db = require("better-sqlite3")("database.db");
 const app = express();
 const port = process.env.PORT || 3001;
 
-app.use(cors());
-app.use(express.json());
+app.use(cors());     //allows request from any origin
+app.use(express.json());  //Parses incoming JSON request bodies
 
 // Create the table
 const createTable = () => {
